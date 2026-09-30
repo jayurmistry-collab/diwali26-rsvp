@@ -68,6 +68,31 @@ button{
 button:hover{
     background:#8b6508;
 }
+button:disabled{
+    background:#999;
+    cursor:not-allowed;
+}
+.hidden-trap{
+    position:absolute;
+    left:-9999px;
+}
+#status{
+    margin-top:15px;
+    padding:12px;
+    border-radius:6px;
+    display:none;
+    text-align:center;
+}
+#status.ok{
+    display:block;
+    background:#e6f4ea;
+    color:#1e6b34;
+}
+#status.err{
+    display:block;
+    background:#fdecea;
+    color:#a12622;
+}
 </style>
 </head>
 <body>
@@ -80,7 +105,8 @@ button:hover{
     </div>
 
     <div class="form-card">
-        <form action="https://formsubmit.co/jayur.mistry@gmail.com" method="POST">
+        <!-- REPLACE YOUR_FORM_ID with the ID from your Formspree form URL (https://formspree.io/f/YOUR_FORM_ID) -->
+        <form id="rsvp-form" action="https://formspree.io/f/xppwbkao" method="POST">
             <label for="name">Name</label>
             <input type="text" id="name" name="Name" required>
 
@@ -97,14 +123,52 @@ button:hover{
             <label for="phone">Phone Number</label>
             <input type="tel" id="phone" name="Phone" required>
 
-            <!-- Email formatting -->
+            <!-- Email subject line -->
             <input type="hidden" name="_subject" value="New Diwali RSVP">
-            <input type="hidden" name="_template" value="table">
-            <input type="hidden" name="_captcha" value="false">
 
-            <button type="submit">Submit RSVP</button>
+            <!-- Spam trap: real guests never see or fill this in -->
+            <input type="text" name="_gotcha" class="hidden-trap" tabindex="-1" autocomplete="off">
+
+            <button type="submit" id="submit-btn">Submit RSVP</button>
+            <div id="status" role="status"></div>
         </form>
     </div>
 </div>
+
+<script>
+const form = document.getElementById("rsvp-form");
+const btn = document.getElementById("submit-btn");
+const status = document.getElementById("status");
+
+form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+    status.className = "";
+    status.textContent = "";
+
+    try {
+        const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "Accept": "application/json" }
+        });
+
+        if (response.ok) {
+            form.reset();
+            status.className = "ok";
+            status.textContent = "Thank you! Your RSVP has been received. We can't wait to celebrate with you.";
+            btn.textContent = "RSVP sent";
+        } else {
+            throw new Error("Server responded with " + response.status);
+        }
+    } catch (err) {
+        status.className = "err";
+        status.textContent = "Sorry, something went wrong and your RSVP was not sent. Please try again, or contact Jinal & Jayur directly.";
+        btn.disabled = false;
+        btn.textContent = "Submit RSVP";
+    }
+});
+</script>
 </body>
 </html>
